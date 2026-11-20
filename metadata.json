@@ -1,0 +1,6 @@
+{
+  "name": "UM-1 Unified Methodology Workbench",
+  "description": "Operational research workbench for Unified Methodology UM-1 Skill v3.1, merging HLRE v5.1 (v2.1 rules; [MV] scope DECIDED: keep — both kernel-backed 4K and Computational-F1 closed-ledger re-derivation 4D earn [MV]/F1, never narrowed to kernel-only) and the CAOS Operating System for claim registration, Hypothesis Arena tournaments, frozen EXP-NNN hypotheses, preflight gates, computable grading, withdrawal ledgers, and RESUME.md handoffs.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

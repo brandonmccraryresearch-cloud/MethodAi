@@ -1,0 +1,87 @@
+{
+  "entities": {
+    "WorkspaceSnapshot": {
+      "title": "WorkspaceSnapshot",
+      "description": "Persisted Google Co-Scientist UM-1 workspace state for an authenticated researcher.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the workspace owner."
+        },
+        "ownerEmail": {
+          "type": "string",
+          "format": "email",
+          "description": "Verified email address of the researcher."
+        },
+        "researchGoal": {
+          "type": "string",
+          "description": "Active Google Co-Scientist overarching research objective."
+        },
+        "payloadJson": {
+          "type": "string",
+          "description": "Serialized JSON payload containing claims, withdrawals, preflightLogs, and externalLogs."
+        },
+        "claimCount": {
+          "type": "integer",
+          "description": "Number of registered claims and frozen EXP records."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last workspace update."
+        }
+      },
+      "required": ["ownerId", "ownerEmail", "researchGoal", "payloadJson", "claimCount", "updatedAt"]
+    },
+    "CoScientistChatLog": {
+      "title": "CoScientistChatLog",
+      "description": "Persisted multi-turn Co-Scientist agent conversation history for an authenticated researcher.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the conversation owner."
+        },
+        "activeAgentRole": {
+          "type": "string",
+          "enum": ["Generation", "Reflection", "Ranking", "Evolution", "Meta-Review"],
+          "description": "Selected Google Co-Scientist specialist agent."
+        },
+        "activeModel": {
+          "type": "string",
+          "enum": ["gemini-4-hydrogen", "gemini-4-argon", "gemini-4-carbon", "gemini-3.1-flash-lite"],
+          "description": "Selected Gemini model alias."
+        },
+        "messagesJson": {
+          "type": "string",
+          "description": "Serialized JSON array of chat messages and grounding metadata."
+        },
+        "messageCount": {
+          "type": "integer",
+          "description": "Count of messages in the thread."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last message update."
+        }
+      },
+      "required": ["ownerId", "activeAgentRole", "activeModel", "messagesJson", "messageCount", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/workspaces/{workspaceId}": {
+      "schema": {
+        "$ref": "#/entities/WorkspaceSnapshot"
+      },
+      "description": "Stores each researcher's complete UM-1 claims, dependency ledgers, preflight logs, and external verification logs keyed by UID."
+    },
+    "/chatThreads/{threadId}": {
+      "schema": {
+        "$ref": "#/entities/CoScientistChatLog"
+      },
+      "description": "Stores each researcher's Google Co-Scientist multi-turn conversation thread keyed by UID."
+    }
+  }
+}

@@ -1,0 +1,59 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isAuthenticated() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.size() >= 3 && email.size() <= 254 && email.matches('^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$');
+    }
+
+    function isValidWorkspaceSnapshot(data) {
+      return data.keys().hasAll(['ownerId', 'ownerEmail', 'researchGoal', 'payloadJson', 'claimCount', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'ownerEmail', 'researchGoal', 'payloadJson', 'claimCount', 'updatedAt'])
+        && data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128
+        && isValidEmail(data.ownerEmail)
+        && data.researchGoal is string && data.researchGoal.size() >= 1 && data.researchGoal.size() <= 2000
+        && data.payloadJson is string && data.payloadJson.size() >= 2 && data.payloadJson.size() <= 900000
+        && data.claimCount is int && data.claimCount >= 0 && data.claimCount <= 500
+        && data.updatedAt is timestamp && data.updatedAt == request.time;
+    }
+
+    function isValidChatLog(data) {
+      return data.keys().hasAll(['ownerId', 'activeAgentRole', 'activeModel', 'messagesJson', 'messageCount', 'updatedAt'])
+        && data.keys().hasOnly(['ownerId', 'activeAgentRole', 'activeModel', 'messagesJson', 'messageCount', 'updatedAt'])
+        && data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128
+        && data.activeAgentRole is string && data.activeAgentRole in ['Generation', 'Reflection', 'Ranking', 'Evolution', 'Meta-Review']
+        && data.activeModel is string && data.activeModel in ['gemini-4-hydrogen', 'gemini-4-argon', 'gemini-4-carbon', 'gemini-3.1-flash-lite']
+        && data.messagesJson is string && data.messagesJson.size() >= 2 && data.messagesJson.size() <= 500000
+        && data.messageCount is int && data.messageCount >= 0 && data.messageCount <= 500
+        && data.updatedAt is timestamp && data.updatedAt == request.time;
+    }
+
+    match /workspaces/{workspaceId} {
+      allow get: if isAuthenticated() && isValidId(workspaceId) && (workspaceId == request.auth.uid || resource.data.ownerId == request.auth.uid);
+      allow list: if isAuthenticated() && resource.data.ownerId == request.auth.uid;
+      allow create: if isAuthenticated() && isValidId(workspaceId) && workspaceId == request.auth.uid && isValidWorkspaceSnapshot(request.resource.data) && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isAuthenticated() && isValidId(workspaceId) && workspaceId == request.auth.uid && resource.data.ownerId == request.auth.uid && isValidWorkspaceSnapshot(request.resource.data) && request.resource.data.ownerId == resource.data.ownerId;
+      allow delete: if isAuthenticated() && isValidId(workspaceId) && workspaceId == request.auth.uid && resource.data.ownerId == request.auth.uid;
+    }
+
+    match /chatThreads/{threadId} {
+      allow get: if isAuthenticated() && isValidId(threadId) && (threadId == request.auth.uid || resource.data.ownerId == request.auth.uid);
+      allow list: if isAuthenticated() && resource.data.ownerId == request.auth.uid;
+      allow create: if isAuthenticated() && isValidId(threadId) && threadId == request.auth.uid && isValidChatLog(request.resource.data) && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isAuthenticated() && isValidId(threadId) && threadId == request.auth.uid && resource.data.ownerId == request.auth.uid && isValidChatLog(request.resource.data) && request.resource.data.ownerId == resource.data.ownerId;
+      allow delete: if isAuthenticated() && isValidId(threadId) && threadId == request.auth.uid && resource.data.ownerId == request.auth.uid;
+    }
+  }
+}
